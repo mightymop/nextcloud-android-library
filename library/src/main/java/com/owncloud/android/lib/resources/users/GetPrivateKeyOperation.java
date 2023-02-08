@@ -28,16 +28,15 @@
 package com.owncloud.android.lib.resources.users;
 
 import com.google.gson.reflect.TypeToken;
-import com.owncloud.android.lib.common.OwnCloudClient;
+import com.nextcloud.common.NextcloudClient;
+import com.nextcloud.operations.GetMethod;
 import com.owncloud.android.lib.common.operations.RemoteOperationResult;
 import com.owncloud.android.lib.common.utils.Log_OC;
 import com.owncloud.android.lib.ocs.ServerResponse;
 import com.owncloud.android.lib.ocs.responses.PrivateKey;
 import com.owncloud.android.lib.resources.OCSRemoteOperation;
 
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.methods.GetMethod;
-
+import java.net.HttpURLConnection;
 
 /**
  * Remote operation performing the fetch of the private key for an user
@@ -46,26 +45,24 @@ import org.apache.commons.httpclient.methods.GetMethod;
 public class GetPrivateKeyOperation extends OCSRemoteOperation<PrivateKey> {
 
     private static final String TAG = GetPrivateKeyOperation.class.getSimpleName();
-    private static final int SYNC_READ_TIMEOUT = 40000;
-    private static final int SYNC_CONNECTION_TIMEOUT = 5000;
     private static final String PUBLIC_KEY_URL = "/ocs/v2.php/apps/end_to_end_encryption/api/v1/private-key";
 
     /**
      * @param client Client object
      */
     @Override
-    protected RemoteOperationResult<PrivateKey> run(OwnCloudClient client) {
+    public RemoteOperationResult<PrivateKey> run(NextcloudClient client) {
         GetMethod getMethod = null;
         RemoteOperationResult<PrivateKey> result;
 
         try {
             // remote request
-            getMethod = new GetMethod(client.getBaseUri() + PUBLIC_KEY_URL + JSON_FORMAT);
+            getMethod = new GetMethod(client.getBaseUri() + PUBLIC_KEY_URL + JSON_FORMAT, true);
             getMethod.addRequestHeader(OCS_API_HEADER, OCS_API_HEADER_VALUE);
 
-            int status = client.executeMethod(getMethod, SYNC_READ_TIMEOUT, SYNC_CONNECTION_TIMEOUT);
+            int status = client.execute(getMethod);
 
-            if (status == HttpStatus.SC_OK) {
+            if (status == HttpURLConnection.HTTP_OK) {
                 ServerResponse<PrivateKey> serverResponse =
                         getServerResponse(getMethod, new TypeToken<ServerResponse<PrivateKey>>() {
                         });
@@ -74,7 +71,6 @@ public class GetPrivateKeyOperation extends OCSRemoteOperation<PrivateKey> {
                 result.setResultData(serverResponse.getOcs().data);
             } else {
                 result = new RemoteOperationResult<>(false, getMethod);
-                client.exhaustResponse(getMethod.getResponseBodyAsStream());
             }
 
         } catch (Exception e) {

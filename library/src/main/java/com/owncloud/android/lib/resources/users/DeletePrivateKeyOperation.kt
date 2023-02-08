@@ -26,13 +26,13 @@
  */
 package com.owncloud.android.lib.resources.users
 
-import com.owncloud.android.lib.common.OwnCloudClient
+import com.nextcloud.common.NextcloudClient
+import com.nextcloud.operations.DeleteMethod
 import com.owncloud.android.lib.common.operations.RemoteOperation
 import com.owncloud.android.lib.common.operations.RemoteOperationResult
 import com.owncloud.android.lib.common.utils.Log_OC
-import org.apache.commons.httpclient.HttpStatus
-import org.apache.commons.httpclient.methods.DeleteMethod
 import java.io.IOException
+import java.net.HttpURLConnection
 
 /**
  * Remote operation performing to delete the private key for an user
@@ -41,17 +41,17 @@ class DeletePrivateKeyOperation : RemoteOperation<Void>() {
     /**
      * @param client Client object
      */
-    override fun run(client: OwnCloudClient): RemoteOperationResult<Void> {
+    override fun run(client: NextcloudClient): RemoteOperationResult<Void> {
         var postMethod: DeleteMethod? = null
         var result: RemoteOperationResult<Void>
         try {
             // remote request
-            postMethod = DeleteMethod(client.baseUri.toString() + PRIVATE_KEY_URL)
-            postMethod.addRequestHeader(OCS_API_HEADER, OCS_API_HEADER_VALUE)
-            val status =
-                client.executeMethod(postMethod, SYNC_READ_TIMEOUT, SYNC_CONNECTION_TIMEOUT)
-            result = RemoteOperationResult<Void>(status == HttpStatus.SC_OK, postMethod)
-            client.exhaustResponse(postMethod.responseBodyAsStream)
+            postMethod = DeleteMethod(
+                client.baseUri.toString() + PRIVATE_KEY_URL,
+                true
+            )
+            val status = client.execute(postMethod)
+            result = RemoteOperationResult<Void>(status == HttpURLConnection.HTTP_OK, postMethod)
         } catch (e: IOException) {
             result = RemoteOperationResult<Void>(e)
             Log_OC.e(TAG, "Deletion of private key failed: " + result.logMessage, result.exception)
@@ -63,8 +63,6 @@ class DeletePrivateKeyOperation : RemoteOperation<Void>() {
 
     companion object {
         private val TAG = DeletePrivateKeyOperation::class.java.simpleName
-        private const val SYNC_READ_TIMEOUT = 40000
-        private const val SYNC_CONNECTION_TIMEOUT = 5000
         private const val PRIVATE_KEY_URL =
             "/ocs/v2.php/apps/end_to_end_encryption/api/v1/private-key"
     }
