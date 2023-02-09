@@ -45,7 +45,7 @@ import java.net.HttpURLConnection;
 public class GetPrivateKeyOperation extends OCSRemoteOperation<PrivateKey> {
 
     private static final String TAG = GetPrivateKeyOperation.class.getSimpleName();
-    private static final String PUBLIC_KEY_URL = "/ocs/v2.php/apps/end_to_end_encryption/api/v1/private-key";
+    private static final String PRIVATE_KEY_URL = "/ocs/v2.php/apps/end_to_end_encryption/api/v1/private-key";
 
     /**
      * @param client Client object
@@ -57,8 +57,7 @@ public class GetPrivateKeyOperation extends OCSRemoteOperation<PrivateKey> {
 
         try {
             // remote request
-            getMethod = new GetMethod(client.getBaseUri() + PUBLIC_KEY_URL + JSON_FORMAT, true);
-            getMethod.addRequestHeader(OCS_API_HEADER, OCS_API_HEADER_VALUE);
+            getMethod = new GetMethod(client.getBaseUri() + PRIVATE_KEY_URL + JSON_FORMAT, true);
 
             int status = client.execute(getMethod);
 
