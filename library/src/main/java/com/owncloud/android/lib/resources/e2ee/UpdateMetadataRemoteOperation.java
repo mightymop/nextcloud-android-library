@@ -39,14 +39,13 @@ import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.json.JSONObject;
 
 import java.net.URLEncoder;
-import java.util.ArrayList;
 
 
 /**
  * Remote operation to update the folder metadata
  */
 
-public class UpdateMetadataRemoteOperation extends RemoteOperation {
+public class UpdateMetadataRemoteOperation extends RemoteOperation<String> {
 
     private static final String TAG = UpdateMetadataRemoteOperation.class.getSimpleName();
     private static final int SYNC_READ_TIMEOUT = 40000;
@@ -76,9 +75,9 @@ public class UpdateMetadataRemoteOperation extends RemoteOperation {
      * @param client Client object
      */
     @Override
-    protected RemoteOperationResult run(OwnCloudClient client) {
+    protected RemoteOperationResult<String> run(OwnCloudClient client) {
         PutMethod putMethod = null;
-        RemoteOperationResult result;
+        RemoteOperationResult<String> result;
 
         try {
             // remote request
@@ -91,8 +90,8 @@ public class UpdateMetadataRemoteOperation extends RemoteOperation {
             putParams[1] = new NameValuePair(FORMAT, "json");
             putMethod.setQueryString(putParams);
 
-            StringRequestEntity data = new StringRequestEntity("metaData="+encryptedMetadataJson, 
-                    "application/json", "UTF-8");
+            StringRequestEntity data = new StringRequestEntity("metaData=" + encryptedMetadataJson,
+                                                               "application/json", "UTF-8");
             putMethod.setRequestEntity(data);
 
             int status = client.executeMethod(putMethod, SYNC_READ_TIMEOUT, SYNC_CONNECTION_TIMEOUT);
@@ -102,24 +101,25 @@ public class UpdateMetadataRemoteOperation extends RemoteOperation {
 
                 // Parse the response
                 JSONObject respJSON = new JSONObject(response);
-                String metadata = (String) respJSON.getJSONObject(NODE_OCS).getJSONObject(NODE_DATA)
-                        .get(NODE_META_DATA);
+                String metadata = respJSON
+                        .getJSONObject(NODE_OCS)
+                        .getJSONObject(NODE_DATA)
+                        .getString(NODE_META_DATA);
 
-                result = new RemoteOperationResult(true, putMethod);
-                ArrayList<Object> keys = new ArrayList<>();
-                keys.add(metadata);
-                result.setData(keys);
+                result = new RemoteOperationResult<>(true, putMethod);
+                result.setResultData(metadata);
             } else {
-                result = new RemoteOperationResult(false, putMethod);
+                result = new RemoteOperationResult<>(false, putMethod);
                 client.exhaustResponse(putMethod.getResponseBodyAsStream());
             }
         } catch (Exception e) {
-            result = new RemoteOperationResult(e);
+            result = new RemoteOperationResult<>(e);
             Log_OC.e(TAG, "Storing of metadata for folder " + fileId + " failed: " + result.getLogMessage(),
-                    result.getException());
+                     result.getException());
         } finally {
-            if (putMethod != null)
+            if (putMethod != null) {
                 putMethod.releaseConnection();
+            }
         }
         return result;
     }

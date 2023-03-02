@@ -22,12 +22,6 @@
 
 package com.owncloud.android.lib.resources.e2ee;
 
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertNotNull;
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assume.assumeTrue;
-
 import android.text.TextUtils;
 
 import com.nextcloud.test.RandomStringGenerator;
@@ -41,6 +35,12 @@ import com.owncloud.android.lib.resources.status.OCCapability;
 import com.owncloud.android.lib.resources.status.OwnCloudVersion;
 
 import org.junit.Test;
+
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertNotNull;
+import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assume.assumeTrue;
 
 public class UpdateMetadataRemoteOperationIT extends AbstractIT {
     @Test
@@ -65,54 +65,52 @@ public class UpdateMetadataRemoteOperationIT extends AbstractIT {
 
         // mark as encrypted
         assertTrue(new ToggleEncryptionRemoteOperation(remoteFolder.getLocalId(),
-                remoteFolder.getRemotePath(),
-                true)
-                .execute(client)
-                .isSuccess());
+                                                       remoteFolder.getRemotePath(),
+                                                       true)
+                           .execute(client)
+                           .isSuccess());
 
         // Lock 
         String token = new LockFileRemoteOperation(remoteFolder.getLocalId())
                 .execute(client)
-                .getSingleData()
-                .toString();
+                .getResultData();
         assertFalse(TextUtils.isEmpty(token));
 
         // add metadata
         String expectedMetadata = "metadata";
         assertTrue(new StoreMetadataRemoteOperation(remoteFolder.getLocalId(), expectedMetadata)
-                .execute(client)
-                .isSuccess());
+                           .execute(client)
+                           .isSuccess());
 
         // unlock
         assertTrue(new UnlockFileRemoteOperation(remoteFolder.getLocalId(), token).execute(client).isSuccess());
 
         // verify metadata
-        String retrievedMetadata = (String) new GetMetadataRemoteOperation(remoteFolder.getLocalId())
+        String retrievedMetadata = new GetMetadataRemoteOperation(remoteFolder.getLocalId())
                 .execute(client)
-                .getSingleData();
+                .getResultData();
 
         assertEquals(expectedMetadata, retrievedMetadata);
 
         // Lock 
         token = new LockFileRemoteOperation(remoteFolder.getLocalId())
                 .execute(client)
-                .getSingleData()
-                .toString();
+                .getResultData();
         assertFalse(TextUtils.isEmpty(token));
 
         // update metadata
         String updatedMetadata = "metadata2";
         assertTrue(new UpdateMetadataRemoteOperation(remoteFolder.getLocalId(), updatedMetadata, token)
-                .execute(client)
-                .isSuccess());
+                           .execute(client)
+                           .isSuccess());
 
         // unlock
         assertTrue(new UnlockFileRemoteOperation(remoteFolder.getLocalId(), token).execute(client).isSuccess());
 
         // verify metadata
-        String retrievedMetadata2 = (String) new GetMetadataRemoteOperation(remoteFolder.getLocalId())
+        String retrievedMetadata2 = new GetMetadataRemoteOperation(remoteFolder.getLocalId())
                 .execute(client)
-                .getSingleData();
+                .getResultData();
 
         assertEquals(updatedMetadata, retrievedMetadata2);
     }
