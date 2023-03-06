@@ -37,7 +37,7 @@ import java.net.HttpURLConnection
 /**
  * Remote operation performing to delete the private key for an user
  */
-class DeletePrivateKeyOperation : RemoteOperation<Void>() {
+class DeletePrivateKeyRemoteOperation : RemoteOperation<Void>() {
     /**
      * @param client Client object
      */
@@ -62,7 +62,7 @@ class DeletePrivateKeyOperation : RemoteOperation<Void>() {
     }
 
     companion object {
-        private val TAG = DeletePrivateKeyOperation::class.java.simpleName
+        private val TAG = DeletePrivateKeyRemoteOperation::class.java.simpleName
         private const val PRIVATE_KEY_URL =
             "/ocs/v2.php/apps/end_to_end_encryption/api/v1/private-key"
     }

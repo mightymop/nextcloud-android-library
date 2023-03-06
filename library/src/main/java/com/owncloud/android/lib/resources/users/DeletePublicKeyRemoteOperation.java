@@ -28,86 +28,46 @@
 package com.owncloud.android.lib.resources.users;
 
 import com.nextcloud.common.NextcloudClient;
-import com.nextcloud.operations.PostMethod;
+import com.nextcloud.operations.DeleteMethod;
 import com.owncloud.android.lib.common.operations.RemoteOperation;
 import com.owncloud.android.lib.common.operations.RemoteOperationResult;
 import com.owncloud.android.lib.common.utils.Log_OC;
 
-import org.json.JSONObject;
-
 import java.net.HttpURLConnection;
-
-import okhttp3.FormBody;
-import okhttp3.RequestBody;
 
 
 /**
- * Remote operation performing the storage of the public key for an user
+ * Remote operation performing to delete the public key for an user
  */
 
-public class SendCSROperation extends RemoteOperation<String> {
+public class DeletePublicKeyRemoteOperation extends RemoteOperation<Void> {
 
-    private static final String TAG = SendCSROperation.class.getSimpleName();
+    private static final String TAG = DeletePublicKeyRemoteOperation.class.getSimpleName();
     private static final String PUBLIC_KEY_URL = "/ocs/v2.php/apps/end_to_end_encryption/api/v1/public-key";
-    private static final String CSR = "csr";
-
-    // JSON node names
-    private static final String NODE_OCS = "ocs";
-    private static final String NODE_DATA = "data";
-    private static final String NODE_PUBLIC_KEY = "public-key";
-
-    private final String csr;
-
-    /**
-     * Constructor
-     */
-    public SendCSROperation(String csr) {
-        this.csr = csr;
-    }
 
     /**
      * @param client Client object
      */
     @Override
-    public RemoteOperationResult<String> run(NextcloudClient client) {
-        PostMethod postMethod = null;
-        RemoteOperationResult<String> result;
+    public RemoteOperationResult<Void> run(NextcloudClient client) {
+        DeleteMethod postMethod = null;
+        RemoteOperationResult<Void> result;
 
         try {
             // remote request
-            RequestBody body = new FormBody
-                    .Builder()
-                    .add(CSR, csr)
-                    .build();
-
-            postMethod = new PostMethod(client.getBaseUri() + PUBLIC_KEY_URL + JSON_FORMAT,
-                                        body,
-                                        true);
+            postMethod = new DeleteMethod(client.getBaseUri() + PUBLIC_KEY_URL, true);
+            postMethod.addRequestHeader(OCS_API_HEADER, OCS_API_HEADER_VALUE);
 
             int status = client.execute(postMethod);
 
-            if (status == HttpURLConnection.HTTP_OK) {
-                String response = postMethod.getResponseBodyAsString();
-
-                // Parse the response
-                JSONObject respJSON = new JSONObject(response);
-                String key = (String) respJSON.getJSONObject(NODE_OCS).getJSONObject(NODE_DATA).get(NODE_PUBLIC_KEY);
-
-                result = new RemoteOperationResult<>(true, postMethod);
-                result.setResultData(key);
-            } else {
-                result = new RemoteOperationResult<>(false, postMethod);
-            }
-
+            result = new RemoteOperationResult<>(status == HttpURLConnection.HTTP_OK, postMethod);
         } catch (Exception e) {
             result = new RemoteOperationResult<>(e);
-            Log_OC.e(TAG, "Fetching of signing CSR failed: " + result.getLogMessage(), result.getException());
+            Log_OC.e(TAG, "Deletion of public key failed: " + result.getLogMessage(), result.getException());
         } finally {
-            if (postMethod != null) {
+            if (postMethod != null)
                 postMethod.releaseConnection();
-            }
         }
         return result;
     }
-
 }

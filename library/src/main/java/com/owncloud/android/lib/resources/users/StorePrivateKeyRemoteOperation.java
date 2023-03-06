@@ -28,62 +28,86 @@
 package com.owncloud.android.lib.resources.users;
 
 import com.nextcloud.common.NextcloudClient;
-import com.nextcloud.operations.GetMethod;
+import com.nextcloud.operations.PostMethod;
 import com.owncloud.android.lib.common.operations.RemoteOperation;
 import com.owncloud.android.lib.common.operations.RemoteOperationResult;
 import com.owncloud.android.lib.common.utils.Log_OC;
 
-import org.apache.commons.httpclient.HttpStatus;
 import org.json.JSONObject;
+
+import okhttp3.FormBody;
+import okhttp3.RequestBody;
 
 
 /**
- * Remote operation performing the fetch of the public key for an user
+ * Remote operation performing the storage of the private key for an user
  */
 
-public class GetPublicKeyOperation extends RemoteOperation<String> {
+public class StorePrivateKeyRemoteOperation extends RemoteOperation<String> {
 
-    private static final String TAG = GetPublicKeyOperation.class.getSimpleName();
-    private static final String PUBLIC_KEY_URL = "/ocs/v2.php/apps/end_to_end_encryption/api/v1/public-key";
+    private static final String TAG = StorePrivateKeyRemoteOperation.class.getSimpleName();
+    private static final String PRIVATE_KEY_URL = "/ocs/v2.php/apps/end_to_end_encryption/api/v1/private-key";
+    private static final String PRIVATE_KEY = "privateKey";
 
     // JSON node names
     private static final String NODE_OCS = "ocs";
     private static final String NODE_DATA = "data";
-    private static final String NODE_PUBLIC_KEYS = "public-keys";
+    private static final String NODE_PRIVATE_KEY = "private-key";
+
+    private final String privateKey;
+
+    /**
+     * Constructor
+     */
+    public StorePrivateKeyRemoteOperation(String privateKey) {
+        this.privateKey = privateKey;
+    }
 
     /**
      * @param client Client object
      */
     @Override
     public RemoteOperationResult<String> run(NextcloudClient client) {
-        GetMethod getMethod = null;
+        PostMethod postMethod = null;
         RemoteOperationResult<String> result;
 
         try {
             // remote request
-            getMethod = new GetMethod(client.getBaseUri() + PUBLIC_KEY_URL + JSON_FORMAT, true);
+            RequestBody body = new FormBody
+                    .Builder()
+                    .add(PRIVATE_KEY, privateKey)
+                    .build();
 
-            int status = client.execute(getMethod);
+            postMethod = new PostMethod(client.getBaseUri() + PRIVATE_KEY_URL + JSON_FORMAT,
+                                        body,
+                                        true);
 
-            if (status == HttpStatus.SC_OK) {
-                String response = getMethod.getResponseBodyAsString();
+            client.execute(postMethod);
+
+            if (postMethod.isSuccess()) {
+                String response = postMethod.getResponseBodyAsString();
 
                 // Parse the response
                 JSONObject respJSON = new JSONObject(response);
-                String key = (String) respJSON.getJSONObject(NODE_OCS).getJSONObject(NODE_DATA)
-                        .getJSONObject(NODE_PUBLIC_KEYS).get(client.getUserId());
+                String key = (String) respJSON
+                        .getJSONObject(NODE_OCS)
+                        .getJSONObject(NODE_DATA)
+                        .get(NODE_PRIVATE_KEY);
 
-                result = new RemoteOperationResult<>(true, getMethod);
+                result = new RemoteOperationResult<>(true, postMethod);
                 result.setResultData(key);
             } else {
-                result = new RemoteOperationResult<>(false, getMethod);
+                result = new RemoteOperationResult<>(false, postMethod);
             }
+
         } catch (Exception e) {
             result = new RemoteOperationResult<>(e);
-            Log_OC.e(TAG, "Fetching of public key failed: " + result.getLogMessage(), result.getException());
+            Log_OC.e(TAG,
+                     "Storing private key failed: " + result.getLogMessage(),
+                     result.getException());
         } finally {
-            if (getMethod != null)
-                getMethod.releaseConnection();
+            if (postMethod != null)
+                postMethod.releaseConnection();
         }
         return result;
     }
