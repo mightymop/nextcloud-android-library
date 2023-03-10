@@ -75,13 +75,13 @@ public class GetPublicKeyRemoteOperation extends RemoteOperation<String> {
             // remote request
             getMethod = new GetMethod(client.getBaseUri() + PUBLIC_KEY_URL + JSON_FORMAT, true);
 
-            if (user.isEmpty()) {
+            if (!user.isEmpty()) {
+                HashMap<String, String> map = new HashMap<>();
+                map.put("users", "[\"" + user + "\"]");
+                getMethod.setQueryString(map);
+            } else {
                 user = client.getUserId();
             }
-
-            HashMap<String, String> map = new HashMap<>();
-            map.put("users", "[\"" + user + "\"]");
-            getMethod.setQueryString(map);
 
             int status = client.execute(getMethod);
 

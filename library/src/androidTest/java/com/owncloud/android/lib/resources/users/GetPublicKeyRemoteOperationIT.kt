@@ -37,18 +37,17 @@ class GetPublicKeyRemoteOperationIT : AbstractIT() {
     }
 
     @Test
-    fun getOwnKey() {
-        val result = GetPublicKeyRemoteOperation().execute(nextcloudClient)
+    fun getKey() {
+        var result = GetPublicKeyRemoteOperation().execute(nextcloudClient)
 
         assertTrue(result.isSuccess)
         assertNotNull(result.resultData)
-    }
+        val testKey = result.resultData
 
-    @Test
-    fun getAnotherPublicKey() {
-        val result = GetPublicKeyRemoteOperation("enc2").execute(nextcloudClient)
+        result = GetPublicKeyRemoteOperation("enc2").execute(nextcloudClient)
 
         assertTrue(result.isSuccess)
         assertNotNull(result.resultData)
+        assertTrue(testKey.compareTo(result.resultData) != 0)
     }
 }
