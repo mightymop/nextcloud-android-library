@@ -48,7 +48,7 @@ abstract class NextcloudRemoteOperation<T> : RemoteOperation<T>() {
      * @param context Android context for the component calling the method.
      * @return Result of the operation.
      */
-    fun executeNextcloudClient(account: Account, context: Context): RemoteOperationResult<T>? {
+    private fun executeNextcloudClient(account: Account, context: Context): RemoteOperationResult<T> {
         mAccount = account
         mContext = context.applicationContext
         clientNew = try {
@@ -66,7 +66,7 @@ abstract class NextcloudRemoteOperation<T> : RemoteOperation<T>() {
      * This is a transitional wrapper around [.executeNextcloudClient]
      * using modern [User] interface instead of platform [Account]
      */
-    fun executeNextcloudClient(user: User, context: Context): RemoteOperationResult<T>? {
+    fun executeNextcloudClient(user: User, context: Context): RemoteOperationResult<T> {
         return executeNextcloudClient(user.toPlatformAccount(), context)
     }
 
